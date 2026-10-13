@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Northstar Outfitters — Widget Demo</title>
+    <style>
+      body {
+        font: 16px Arial;
+        background: #f6f3ea;
+        color: #283d32;
+        max-width: 1000px;
+        margin: auto;
+        padding: 50px 25px;
+      }
+      header {
+        display: flex;
+        justify-content: space-between;
+        border-bottom: 1px solid #ccd5c8;
+        padding-bottom: 25px;
+      }
+      h1 {
+        font: 64px Georgia;
+        max-width: 650px;
+        margin-top: 90px;
+      }
+      p {
+        line-height: 1.7;
+        max-width: 650px;
+      }
+      input {
+        padding: 12px;
+        width: 360px;
+        max-width: 90%;
+        border: 1px solid #aab9a9;
+        border-radius: 7px;
+      }
+      button {
+        padding: 12px;
+        background: #244c39;
+        color: white;
+        border: 0;
+        border-radius: 7px;
+        cursor: pointer;
+      }
+      .card {
+        padding: 25px;
+        border: 1px solid #ccd5c8;
+        border-radius: 12px;
+        margin-top: 40px;
+      }
+      small {
+        color: #617260;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <strong>NORTHSTAR / OUTFITTERS</strong
+      ><small>FICTIONAL BUSINESS · DEMO WEBSITE</small>
+    </header>
+    <h1>More trails.<br />Fewer unanswered questions.</h1>
+    <p>
+      This separate website demonstrates the SupportDesk AI embed. Ask about
+      shipping or returns, view a source, create a ticket, then use the
+      dashboard support inbox to take over.
+    </p>
+    <div class="card">
+      <p>
+        Paste the public workspace ID from dashboard Settings. Add
+        <strong>http://localhost:3001</strong> to its permitted origins first.
+      </p>
+      <form id="setup">
+        <input
+          name="workspace"
+          aria-label="Public workspace ID"
+          placeholder="Workspace public ID"
+          required
+        /><button>Load support widget</button>
+      </form>
+      <p id="status" role="status"></p>
+    </div>
+    <script>
+      document.getElementById("setup").onsubmit = (e) => {
+        e.preventDefault();
+        const id = new FormData(e.target).get("workspace");
+        location.search = "workspace=" + encodeURIComponent(id);
+      };
+      const id = new URLSearchParams(location.search).get("workspace");
+      if (id) {
+        document.querySelector("input").value = id;
+        const script = document.createElement("script");
+        script.src = "http://localhost:8000/widget/loader.js";
+        script.dataset.workspace = id;
+        document.body.append(script);
+        document.getElementById("status").textContent =
+          "Widget loaded. Use the chat button in the lower right.";
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,46 @@
+name: verify
+on: [push, pull_request]
+jobs:
+  local-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.10'}
+      - uses: actions/setup-node@v4
+        with: {node-version: '24'}
+      - uses: pnpm/action-setup@v4
+        with: {version: '11.25.0'}
+      - run: pip install -r backend/requirements.lock
+      - run: ruff check backend scripts && ruff format --check backend scripts
+      - run: cd backend && mypy app && pytest -q
+      - run: pnpm --dir frontend install --frozen-lockfile
+      - run: pnpm --dir frontend lint && pnpm --dir frontend typecheck && pnpm --dir frontend build
+  compose-acceptance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.10'}
+      - uses: actions/setup-node@v4
+        with: {node-version: '24'}
+      - uses: pnpm/action-setup@v4
+        with: {version: '11.25.0'}
+      - run: cp .env.example .env && docker compose up --build -d --wait --wait-timeout 240
+      - run: pip install -r backend/requirements.lock
+      - run: python scripts/compose_smoke.py
+      - run: docker compose exec -T postgres createdb -U supportdesk acceptance
+      - run: cd backend && pytest -q
+        env:
+          TEST_DATABASE_URL: postgresql+psycopg://supportdesk:supportdesk-local-change-me@localhost:5432/acceptance
+      - run: pnpm --dir frontend install --frozen-lockfile && pnpm --dir frontend exec playwright install --with-deps chromium
+      - run: pnpm --dir frontend test:e2e
+      - if: always()
+        run: docker compose logs --no-color > compose.log && docker compose down
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: verification-evidence
+          path: |
+            compose.log
+            frontend/test-results/

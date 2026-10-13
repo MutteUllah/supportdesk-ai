@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Support chat</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        font: 14px Arial;
+        margin: 0;
+        color: #1d3530;
+        background: #f7faf7;
+        height: 100dvh;
+        display: flex;
+        flex-direction: column;
+      }
+      header {
+        padding: 18px;
+        background: var(--brand, #176b5b);
+        color: white;
+      }
+      h1 {
+        font-size: 18px;
+        margin: 0 0 6px;
+      }
+      small {
+        font-size: 11px;
+      }
+      #messages {
+        flex: 1;
+        overflow: auto;
+        padding: 12px;
+        min-height: 70px;
+      }
+      .message {
+        border: 1px solid #dbe6dd;
+        border-radius: 10px;
+        padding: 12px;
+        margin: 8px 0;
+        background: white;
+        white-space: pre-wrap;
+        line-height: 1.5;
+      }
+      .user {
+        margin-left: 25px;
+        background: #e5efe7;
+      }
+      .message small {
+        display: block;
+        color: #648074;
+      }
+      button {
+        border: 1px solid #cadacf;
+        border-radius: 7px;
+        padding: 8px;
+        background: white;
+        color: #175b4b;
+        cursor: pointer;
+      }
+      button:disabled {
+        opacity: 0.5;
+      }
+      form {
+        padding: 10px;
+        display: flex;
+        gap: 7px;
+      }
+      input,
+      textarea {
+        font: inherit;
+        min-width: 0;
+        padding: 10px;
+        border: 1px solid #cedbd1;
+        border-radius: 7px;
+        width: 100%;
+      }
+      #actions {
+        display: flex;
+        gap: 6px;
+        padding: 5px 10px;
+        flex-wrap: wrap;
+      }
+      #error {
+        color: #8b3329;
+        margin: 0;
+        padding: 8px 12px;
+      }
+      #status {
+        margin: 0;
+        padding: 5px 12px;
+        color: #63766b;
+        font-size: 12px;
+      }
+      dialog {
+        width: 90%;
+        border: 1px solid #ccd9d0;
+        border-radius: 12px;
+        padding: 18px;
+      }
+      dialog form {
+        display: grid;
+        padding: 0;
+      }
+      label {
+        display: grid;
+        gap: 6px;
+      }
+      #source-text {
+        white-space: pre-wrap;
+        line-height: 1.6;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1 id="name">Support assistant</h1>
+      <small id="mode"></small>
+    </header>
+    <div id="messages" aria-live="polite"></div>
+    <p id="status"></p>
+    <p id="error" role="alert"></p>
+    <div id="actions">
+      <button id="ticket" disabled>Create ticket</button
+      ><button id="human" disabled>Request human</button
+      ><button id="restart">New session</button>
+    </div>
+    <form id="chat">
+      <input
+        id="text"
+        aria-label="Message"
+        placeholder="How can we help?"
+        required
+        maxlength="4000"
+      /><button id="send" disabled>Send</button>
+    </form>
+    <dialog id="ticket-dialog">
+      <h2>Create support ticket</h2>
+      <form id="ticket-form">
+        <label>Subject<input name="subject" required maxlength="200" /></label
+        ><label
+          >Issue description<textarea
+            name="description"
+            required
+            maxlength="4000"
+          ></textarea></label
+        ><label>Email (optional)<input name="email" type="email" /></label
+        ><button>Confirm & create ticket</button
+        ><button type="button" id="cancel">Cancel</button>
+      </form>
+    </dialog>
+    <dialog id="source">
+      <h2 id="source-name"></h2>
+      <p id="source-text"></p>
+      <button id="close-source">Close source</button>
+    </dialog>
+    <script src="/widget-assets/app.js" defer></script>
+  </body>
+</html>
