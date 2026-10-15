@@ -93,6 +93,8 @@ docker compose exec api python -m app.seed
 
 Compose applies migrations and creates the local storage bucket. The explicit seed command creates two fictional businesses and queues their policy documents through Celery. Wait until their documents are marked **ready/searchable**. Seeding is repeatable and disabled in production; it does not reset an existing account's password.
 
+The first build compiles the pinned MinIO release from official Go source because its previous container distribution is unavailable. Allow several minutes for this build; later local builds can reuse Docker's cache. Bucket initialization uses the backend's S3 client.
+
 | Service                             | Local address                                                                 |
 | ----------------------------------- | ----------------------------------------------------------------------------- |
 | Business dashboard                  | [localhost:3000](http://localhost:3000)                                       |
@@ -231,7 +233,7 @@ python scripts/compose_smoke.py
 
 Backend tests default to a disposable SQLite database. `TEST_DATABASE_URL` selects a disposable PostgreSQL database and enables the PostgreSQL concurrency cases. **The fixtures drop application tables: never select a database containing data you need to keep.** See [Verification](docs/verification.md) for commands, executed results, and environment-dependent checks.
 
-The [GitHub Actions workflow](.github/workflows/ci.yml) defines backend/frontend checks, a Compose smoke, PostgreSQL tests, and browser acceptance. A committed workflow is not evidence that its remote run has passed.
+The [GitHub Actions workflow](.github/workflows/ci.yml) passed its backend/frontend checks and real Compose acceptance in [this verified run](https://github.com/MutteUllah/supportdesk-ai/actions/runs/38733881701): **34 PostgreSQL tests**, a worker/S3/Redis/pgvector smoke, and **one browser scenario**. Models remained in mock mode. See [Verification](docs/verification.md) for the exact code revision, historical local results, and remaining limits.
 
 ## Repository structure
 
@@ -247,6 +249,7 @@ The [GitHub Actions workflow](.github/workflows/ci.yml) defines backend/frontend
 │   └── tests/               # Playwright acceptance scenario
 ├── widget/                  # Embed loader and visitor chat iframe
 ├── demo-site/               # Separate website for widget integration
+├── docker/                  # Pinned MinIO source-build container
 ├── docs/                    # Architecture, operations, evidence, and screenshots
 ├── scripts/                 # Local test server and smoke/packaging helpers
 ├── .github/workflows/       # CI configuration
@@ -256,7 +259,7 @@ The [GitHub Actions workflow](.github/workflows/ci.yml) defines backend/frontend
 
 ## Production scope and current limits
 
-This repository is an implemented application with local verification, not a hosted service or a claim of production validation. No cloud deployment or real-provider evaluation is recorded in the original verification evidence. Review the current [verification record](docs/verification.md) before relying on infrastructure-specific behavior.
+This repository is an implemented application with local and real-infrastructure CI verification. No cloud deployment or real-provider evaluation has been performed. Review the current [verification record](docs/verification.md) before relying on infrastructure-specific behavior.
 
 - Production requires HTTPS dashboard/API origins on the same site, PostgreSQL with pgvector, configured private S3 storage, Redis, a worker, and one beat instance. Local Compose credentials and loopback bindings are development defaults. See the [deployment guide](docs/operations.md#production-deployment).
 - Chat holds a workspace lock during generation to serialize quota accounting; throughput within one workspace is limited. Retrieval uses exact tenant-filtered searches, and conversation/ticket lists are capped at 200.

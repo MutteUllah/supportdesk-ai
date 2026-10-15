@@ -1,6 +1,8 @@
 # Verification record
 
-Verified on 12 October 2026 on Windows using Python 3.10.10, Node 24.19.0, and Microsoft Edge through Playwright. This is a record of executed checks, not a claim that Docker or production infrastructure was available.
+The latest real-infrastructure verification is the [successful GitHub Actions run for commit `8a5be4e`](https://github.com/MutteUllah/supportdesk-ai/actions/runs/38733881701) on 15 October 2026: 34 PostgreSQL tests, the real worker/storage smoke, and browser acceptance passed with mock models. Details are recorded at the end of this document.
+
+The original 12 October 2026 Windows results below are preserved as historical evidence. They used Python 3.10.10, Node 24.19.0, and Microsoft Edge through Playwright; Docker was unavailable on that Windows machine.
 
 ## Passed checks
 
@@ -64,9 +66,9 @@ Screenshots are retained at `docs/screenshots/dashboard-desktop.png` and `docs/s
 - Standalone Next.js output needs static assets copied before local startup. The cross-platform `frontend/scripts/start.mjs` performs that copy and starts the generated server.
 - Citation views originally truncated evidence independently of generation. Generation now receives exactly the bounded excerpt stored for source viewing.
 
-## Blocked checks and exact next steps
+## Checks unavailable during the original 12 October verification
 
-**Docker CLI/daemon was unavailable in this environment.** No Docker image build or full Compose smoke is claimed. Run on a Docker-capable machine:
+**Docker CLI/daemon was unavailable on the original Windows machine.** Docker image builds and the full Compose smoke were subsequently verified in GitHub Actions on 15 October, as recorded below. To reproduce on a Docker-capable machine:
 
 ```sh
 cp .env.example .env
@@ -80,13 +82,13 @@ cd ../frontend
 pnpm test:e2e
 ```
 
-Example disposable test URL: `postgresql+psycopg://supportdesk:supportdesk-local-change-me@localhost:5432/acceptance`. Test fixtures drop application tables: do not use your application database. The CI workflow includes the real Compose smoke, PostgreSQL test suite, and browser scenario, but **CI itself has not been run** because no remote repository was configured.
+Example disposable test URL: `postgresql+psycopg://supportdesk:supportdesk-local-change-me@localhost:5432/acceptance`. Test fixtures drop application tables: do not use your application database. No remote repository was configured for the original 12 October check; the CI workflow has since passed the real Compose smoke, PostgreSQL test suite, and browser scenario.
 
 **No real-provider credentials were supplied.** No paid inference was run. With a configured key and `MODEL_MODE=openai`, run `python scripts/real_provider_smoke.py` as an explicit small provider check, then create a fresh workspace and test your own policies through the full app. Evaluate grounding and prompt-injection behavior with the selected real model separately.
 
 **No cloud deployment was performed.** Backup/restore commands and production configuration are documented, but infrastructure failover, live PostgreSQL migration/restore, load testing, and external HTTPS/proxy deployment still need validation in the target environment.
 
-The implementation and local mock flows are delivered. The real-infrastructure portions of the original acceptance criteria remain unverified until those environment-dependent checks run.
+The original local record did not validate real infrastructure. The later remote run below closes the Compose, worker/storage, PostgreSQL concurrency, and browser-integration gaps; cloud deployment and real-model evaluation remain outstanding.
 
 ## Prepublication recheck — 15 October 2026
 
@@ -108,6 +110,22 @@ The existing checks were rerun on Windows with the project's installed Python vi
 
 Git and Docker ignore rules were expanded to cover environment-file variants, SQLite sidecar files, logs, virtual environments, and browser-test artifacts. The credential scan checks recognizable signatures; it is not a guarantee that every possible secret format can be detected. Example local-development credentials remain deliberately documented in `.env.example` and Compose.
 
-The browser scenario again used SQLite, local file storage, inline jobs, in-memory test rate limits, and mock models. Its temporary loopback servers were stopped after verification. Docker, real PostgreSQL/Redis/MinIO integration, cloud deployment, and paid model inference were not rerun. Remote CI status must be checked on GitHub after publication.
+This Windows browser scenario again used SQLite, local file storage, inline jobs, in-memory test rate limits, and mock models. Its temporary loopback servers were stopped after verification. Docker and real PostgreSQL/Redis/MinIO integration were not run in this Windows recheck; they were validated subsequently in remote CI below. Cloud deployment and paid model inference remain unverified.
 
 The sandbox initially denied Node's canonical-path lookup. Frontend verification was rerun successfully with access to the existing workspace and dependencies; the results above reflect that completed run.
+
+## Remote infrastructure verification — 15 October 2026
+
+Both jobs passed in [GitHub Actions run 38733881701](https://github.com/MutteUllah/supportdesk-ai/actions/runs/38733881701) for code revision [`8a5be4e`](https://github.com/MutteUllah/supportdesk-ai/commit/8a5be4e986c7c264c9a7e5b0d33938478c81807e). The workflow used an Ubuntu runner, Python 3.10, Node 24, and pnpm 11.25.0.
+
+| Check | Executed evidence | Result |
+|---|---|---|
+| Python/frontend checks | Locked installs, Ruff lint/format, mypy, pytest, ESLint, TypeScript, production Next.js build | Passed; mypy checked 14 source files; SQLite tests: **32 passed, 2 skipped in 5.00 seconds** |
+| Container build and startup | `docker compose up --build -d --wait --wait-timeout 240` | All ten services built/started according to their readiness/dependency conditions, including migrations, storage initialization, API, worker, and beat |
+| Real ingestion and cited answer | `python scripts/compose_smoke.py` against the Compose API | Passed: actual Celery worker, MinIO object storage, Redis, and PostgreSQL/pgvector produced a searchable document and a cited answer |
+| PostgreSQL acceptance | Disposable `acceptance` database with `TEST_DATABASE_URL`, then `pytest -q` in `backend` | **34 passed in 7.90 seconds**, including concurrent ticket retries and exclusive agent claims; no PostgreSQL skips |
+| Browser acceptance | Playwright Chromium against the production frontend and Compose backend/demo website | **1 passed in 16.7 seconds**; registration, knowledge ingestion, source dialog, tickets, widget continuity, human handoff, login, and mobile overflow assertion |
+
+The first remote attempt exposed unavailable upstream MinIO Docker Hub images. The repair builds the same pinned MinIO server release from official Go source and initializes its bucket using the backend's existing boto3 client. Five focused initializer tests cover an existing bucket, missing bucket, forbidden access, concurrent creation, and a conflicting bucket. No workflow checks were disabled to obtain the successful result.
+
+The Compose application used **mock embedding and answer generation**, with real database/storage/broker/worker services. The PostgreSQL pytest fixtures additionally use inline jobs, local storage, and in-memory test rate limits to isolate test cases; the independent Compose smoke and browser scenario exercise the actual services. These results do not establish paid-provider connectivity, real-model answer quality, production performance, backups/failover, or cloud deployment.
