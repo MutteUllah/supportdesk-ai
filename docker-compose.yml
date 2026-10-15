@@ -36,7 +36,9 @@ services:
       retries: 20
     restart: unless-stopped
   minio:
-    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    build:
+      context: .
+      dockerfile: docker/minio.Dockerfile
     command: server /data --console-address ':9001'
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-supportdesk}
@@ -49,14 +51,11 @@ services:
       retries: 20
     restart: unless-stopped
   storage-init:
-    image: minio/mc:RELEASE.2025-04-16T18-13-26Z
+    <<: *backend
+    command: ["python", "-m", "app.init_storage"]
+    restart: "no"
     depends_on:
       minio: {condition: service_healthy}
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-supportdesk}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-local-development-only}
-    entrypoint: ["/bin/sh", "-c"]
-    command: ['mc alias set local http://minio:9000 "$$MINIO_ROOT_USER" "$$MINIO_ROOT_PASSWORD" && mc mb --ignore-existing local/supportdesk']
   migrate:
     <<: *backend
     command: ["alembic", "upgrade", "head"]
