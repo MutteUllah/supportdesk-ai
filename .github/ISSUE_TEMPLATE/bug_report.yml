@@ -1,0 +1,34 @@
+name: Bug report
+description: Report a reproducible problem in SupportDesk AI.
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Remove credentials, customer documents, conversation content, and other private data before submitting. See SECURITY.md for sensitive reports.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened?
+      description: Describe the expected behavior and the actual result.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: Include the smallest example that demonstrates the problem.
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include your commit, OS, browser, Docker or local setup, and mock or real-provider mode. Do not include secrets.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Sanitized logs or screenshots
+      description: Include request IDs or error messages where helpful; redact sensitive information.

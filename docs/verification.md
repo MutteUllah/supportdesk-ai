@@ -87,3 +87,27 @@ Example disposable test URL: `postgresql+psycopg://supportdesk:supportdesk-local
 **No cloud deployment was performed.** Backup/restore commands and production configuration are documented, but infrastructure failover, live PostgreSQL migration/restore, load testing, and external HTTPS/proxy deployment still need validation in the target environment.
 
 The implementation and local mock flows are delivered. The real-infrastructure portions of the original acceptance criteria remain unverified until those environment-dependent checks run.
+
+## Prepublication recheck — 15 October 2026
+
+The existing checks were rerun on Windows with the project's installed Python virtual environment, Node 24.19.0, and Microsoft Edge. The application code was unchanged for this publication preparation.
+
+| Check | Command or method | Result |
+|---|---|---|
+| Backend tests | `python -m pytest -q` from `backend` | **27 passed, 2 skipped in 7.91 seconds**; PostgreSQL concurrency tests still require PostgreSQL |
+| Python types | `python -m mypy --config-file backend/pyproject.toml backend/app` | Passed; 13 source files |
+| Python lint and format | `ruff check backend scripts`; `ruff format --check backend scripts` | Passed; 24 Python files already formatted |
+| Frontend lint and types | `pnpm lint`; `pnpm typecheck` from `frontend` | Passed |
+| Production frontend | `pnpm build` from `frontend` | Passed; compiled, typechecked, and prerendered with Next.js 16.4.0 |
+| Browser acceptance | `pnpm test:e2e` from `frontend`, with `BROWSER_EXECUTABLE` set to installed Edge | **1 passed in 11.9 seconds** against the production frontend, local mock backend, and demo website |
+| Widget syntax | `node --check widget/app.js`; `node --check widget/loader.js` | Passed |
+| Configuration syntax | PyYAML parsing of Compose, CI workflow, and both GitHub issue forms | Passed; 10 Compose services; issue forms contain required metadata and bodies |
+| Source audit | Common credential signatures and private-key headers checked across all 68 initially tracked files and the single existing commit | No matches; no tracked environment-secret files, runtime databases, dependency directories, build output, or private-key files |
+| Ignore rules | `git check-ignore` with 11 representative paths | Environment variants, databases and WAL files, logs, build output, and test artifacts are ignored; `.env.example` remains publishable |
+| Whitespace | `git diff --check` | Passed |
+
+Git and Docker ignore rules were expanded to cover environment-file variants, SQLite sidecar files, logs, virtual environments, and browser-test artifacts. The credential scan checks recognizable signatures; it is not a guarantee that every possible secret format can be detected. Example local-development credentials remain deliberately documented in `.env.example` and Compose.
+
+The browser scenario again used SQLite, local file storage, inline jobs, in-memory test rate limits, and mock models. Its temporary loopback servers were stopped after verification. Docker, real PostgreSQL/Redis/MinIO integration, cloud deployment, and paid model inference were not rerun. Remote CI status must be checked on GitHub after publication.
+
+The sandbox initially denied Node's canonical-path lookup. Frontend verification was rerun successfully with access to the existing workspace and dependencies; the results above reflect that completed run.
